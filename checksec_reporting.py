@@ -112,9 +112,12 @@ class ChecksecReporter:
             if canary == 'no':
                 self.results['no_canary'].append(file_path)
             
-            # Check for FORTIFY = "no"
-            fortify = props_lower.get('fortify', '').lower()
-            if fortify == 'no':
+            # Check for FORTIFY = "no" (checksec may use different field names)
+            fortify = (props_lower.get('fortify', '') or 
+                      props_lower.get('fortify_source', '') or 
+                      props_lower.get('fortified', '')).lower()
+            # Check for "no", "none", or "disabled"
+            if fortify in ['no', 'none', 'disabled']:
                 self.results['no_fortify'].append(file_path)
             
             # Check for RELRO = "no"
