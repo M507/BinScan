@@ -84,6 +84,7 @@ class VulnerabilityScanner:
         # Use all functions if --all flag is set, otherwise use default high-risk functions
         self.UNSAFE_FUNCTIONS = self.ALL_UNSAFE_FUNCTIONS if scan_all else self.DEFAULT_UNSAFE_FUNCTIONS
         self.results = defaultdict(list)
+        self.function_counts = defaultdict(int)  # Track usage count per function
         self.total_files = 0
         self.files_with_symbols = 0
         self.total_unsafe_functions = 0
@@ -224,6 +225,9 @@ class VulnerabilityScanner:
             if unsafe_functions:
                 self.results[str(file_path)] = unsafe_functions
                 self.total_unsafe_functions += len(unsafe_functions)
+                # Count function usage
+                for func in unsafe_functions:
+                    self.function_counts[func] += 1
         else:
             print(f"  {Fore.YELLOW}No symbols found or not a valid binary")
     
@@ -267,6 +271,28 @@ class VulnerabilityScanner:
             print(f"{Fore.WHITE}Path: {file_path}")
             print(f"{Fore.YELLOW}Number of unique unsafe functions found: {len(unique_funcs)}")
             print(f"{Fore.RED}Unsafe functions: {', '.join(unique_funcs)}")
+    
+    def print_statistics(self) -> None:
+        """Print statistics about unsafe function usage."""
+        print("\n" + "=" * 80)
+        print(f"{Fore.CYAN}{Style.BRIGHT}STATISTICS")
+        print("=" * 80)
+        
+        if not self.function_counts:
+            print(f"\n{Fore.GREEN}No unsafe functions found.")
+            return
+        
+        # Sort by count (descending), then by name
+        sorted_funcs = sorted(self.function_counts.items(), key=lambda x: (-x[1], x[0]))
+        
+        print(f"\n{Fore.WHITE}Total files scanned: {self.total_files}")
+        print(f"{Fore.WHITE}Files with unsafe functions: {len(self.results)}")
+        print(f"{Fore.WHITE}Total unsafe function occurrences: {sum(self.function_counts.values())}")
+        print(f"\n{Fore.YELLOW}{Style.BRIGHT}Function Usage Count:")
+        print("-" * 80)
+        
+        for func, count in sorted_funcs:
+            print(f"{Fore.RED}{func:20} {Fore.WHITE}: {count:4} time{'s' if count > 1 else ''}")
 
 def main():
     """Main function to run the vulnerability scanner."""
@@ -289,6 +315,9 @@ Examples:
 
     parser.add_argument('--all', action='store_true', 
                        help='Scan for all unsafe functions (default: only high-risk functions)')
+
+    parser.add_argument('--stat', action='store_true',
+                       help='Show statistics: function names and usage counts')
 
     parser.add_argument(
         '--version',
@@ -319,7 +348,11 @@ Examples:
     # Create and run scanner
     scanner = VulnerabilityScanner(target, args.all)
     scanner.scan_directory()
-    scanner.print_results()
+    
+    if args.stat:
+        scanner.print_statistics()
+    else:
+        scanner.print_results()
 
 if __name__ == "__main__":
     main() 
