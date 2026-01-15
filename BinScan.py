@@ -121,8 +121,9 @@ class VulnerabilityScanner:
             # Get regular symbols
             result = subprocess.run(
                 ['nm', str(file_path)],
-                capture_output=True,
-                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
                 timeout=30
             )
             
@@ -141,8 +142,9 @@ class VulnerabilityScanner:
             # Get dynamic symbols (imported functions)
             result_dyn = subprocess.run(
                 ['nm', '-D', str(file_path)],
-                capture_output=True,
-                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
                 timeout=30
             )
             
@@ -298,7 +300,7 @@ Examples:
 
     # Check if nm is available
     try:
-        subprocess.run(['nm', '--version'], capture_output=True, check=True)
+        subprocess.run(['nm', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         print(f"{Fore.RED}Error: nm not found. Please install binutils:")
         print(f"{Fore.WHITE}  Ubuntu/Debian: sudo apt-get install binutils")
